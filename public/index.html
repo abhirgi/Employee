@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Management</title>
+</head>
+<body>
+    <h1>Add Employee</h1>
+    <form id="employeeForm">
+        <label for="Name">Name:</label>
+        <input type="text" id="Name" name="Name" required><br><br>
+        <label for="Age">Age:</label>
+        <input type="number" id="Age" name="Age" required><br><br>
+        <label for="Sex">Sex:</label>
+        <select id="Sex" name="Sex" required>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+        </select><br><br>
+        <label for="MarritalStatus">Marital Status:</label>
+        <select id="MarritalStatus" name="MarritalStatus" required>
+            <option value="true">Married</option>
+            <option value="false">Single</option>
+        </select><br><br>
+        <button type="submit">Add Employee</button>
+    </form>
+
+    <h2>Employees List</h2>
+    <ul id="employeeList"></ul>
+
+    <h2>Get Employee by ID</h2>
+    <input type="text" id="getId" placeholder="Enter Employee ID">
+    <button id="getEmployeeBtn">Get Employee</button>
+    <div id="employeeDetails"></div>
+
+    <h2>Update Employee</h2>
+    <input type="text" id="updateId" placeholder="Enter Employee ID">
+    <input type="text" id="updateName" placeholder="New Name">
+    <input type="number" id="updateAge" placeholder="New Age">
+    <select id="updateSex">
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+    </select>
+    <select id="updateMarritalStatus">
+        <option value="true">Married</option>
+        <option value="false">Single</option>
+    </select>
+    <button id="updateEmployeeBtn">Update Employee</button>
+
+    <script>
+        document.getElementById('employeeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            const response = await fetch('/employees', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                const employee = await response.json();
+                const li = document.createElement('li');
+                li.textContent = `${employee.Name} - ${employee.Age} - ${employee.Sex} - ${employee["Marrital status"]}`;
+                document.getElementById('employeeList').appendChild(li);
+            } else {
+                alert('Error adding employee');
+            }
+        });
+
+        async function fetchEmployees() {
+            const response = await fetch('/employees');
+            const employees = await response.json();
+            const employeeList = document.getElementById('employeeList');
+            employeeList.innerHTML = ''; // Clear the list
+
+            employees.forEach(employee => {
+                const li = document.createElement('li');
+                li.textContent = `${employee.Name} - ${employee.Age} - ${employee.Sex} - ${employee["Marrital status"]}`;
+                employeeList.appendChild(li);
+            });
+        }
+
+        document.getElementById('getEmployeeBtn').addEventListener('click', async () => {
+            const id = document.getElementById('getId').value;
+            const response = await fetch(`/employees/${id}`);
+
+            if (response.ok) {
+                const employee = await response.json();
+                document.getElementById('employeeDetails').innerHTML = `
+                    <h3>Employee Details</h3>
+                    <p>Name: ${employee.Name}</p>
+                    <p>Age: ${employee.Age}</p>
+                    <p>Sex: ${employee.Sex}</p>
+                    <p>Marital Status: ${employee["Marrital status"]}</p>
+                `;
+            } else {
+                alert('Error fetching employee');
+            }
+        });
+
+        document.getElementById('updateEmployeeBtn').addEventListener('click', async () => {
+            const id = document.getElementById('updateId').value;
+            const updatedData = {
+                Name: document.getElementById('updateName').value,
+                Age: document.getElementById('updateAge').value,
+                Sex: document.getElementById('updateSex').value,
+                MarritalStatus: document.getElementById('updateMarritalStatus').value
+            };
+
+            const response = await fetch(`/employees/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updatedData),
+            });
+
+            if (response.ok) {
+                alert('Employee updated successfully');
+                fetchEmployees(); // Refresh the employee list
+            } else {
+                alert('Error updating employee');
+            }
+        });
+
+        // Fetch employees on load
+        fetchEmployees();
+    </script>
+</body>
+</html>
